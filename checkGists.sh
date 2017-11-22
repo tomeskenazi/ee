@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 PROGNAME=${0##*/}
 OPTIND=1 # Reset in case getopts has been used previously in the shell.
 FREQUENCY=30 # Resting period in seconds between 2 GitHub Api calls
@@ -17,7 +17,7 @@ function forcekill()
 # Verbose mode function
 dbg_print () {
   if [ ! -z "$DEBUGMODE"  ]; then
-    echo [DEBUG] $1
+    echo [DEBUG] $1 >&2
   fi
   return 1
 }
@@ -33,6 +33,22 @@ get_gistnb() {
     echo $(forcekill)
   fi
   echo $(echo "$cmdres" | grep public_gists | sed 's/.*: //' | sed 's/,$//')
+}
+
+# Get last Created Gist Time
+get_gist_latestCreatedTime(){
+  cmdres=$(curl -X GET https://api.github.com/users/$USERNAME/gists 2>&1 | grep created_at)
+  time_top=0
+  while read -r line; do
+    time_created=$(echo "$line" | sed -e 's/.*: "//' -e 's/".*$//')
+    time_created_conv=$(date -d "$time_created" +%s)
+    dbg_print "FUNC: Found Created at: $time_created"
+    if (( $time_created_conv > $time_top )); then
+      dbg_print "FUNC: Latest Created at: $time_created"
+      time_top=$time_created_conv
+    fi
+  done <<< "$cmdres"
+  echo $time_top
 }
 
 # Usage function
@@ -55,6 +71,7 @@ EOF
 exit
 }
 
+# Process Command Line Arguments
 while getopts "h?vt:" opt; do
     case "$opt" in
     h|\?)
@@ -73,19 +90,22 @@ USERNAME=$@
 dbg_print "USERNAME: $USERNAME"
 dbg_print "FREQUENCY: $FREQUENCY"
 
+# Check if no user name given
 if [ "$USERNAME" == "" ]
 then
   usage
 fi
 
-numgists=$(get_gistnb)
-dbg_print "Original nb gists: $numgists"
+# Compute original Latest Gist found
+gist_createdTime=$(get_gist_latestCreatedTime)
+dbg_print "Latest Created Gist: $gist_createdTime"
 
+# Main Monitoring loop, compare latest Gist found with reference
 while sleep $FREQUENCY;do
-  current_gists=$(get_gistnb)
-  if (( $current_gists > $numgists )); then
+  current_time_top=$(get_gist_latestCreatedTime)
+  if (( $current_time_top > $gist_createdTime )); then
     echo "NEW GIST PUBLISHED"
   fi
-  numgists=$current_gists
-  dbg_print "Nb gists: $numgists"
+  gist_createdTime=$current_time_top
+  dbg_print "Latest Gist published at $gist_createdTime"
 done
