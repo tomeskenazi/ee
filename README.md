@@ -5,21 +5,22 @@ This script is a Linux-shell monitoring tool that sends a notification every tim
 
 Requirements:
 As given:
-"Using the Github API you should query a user’s publicly available github gists. 
+"Using the Github API you should query a user’s publicly available github gists.
 The script should then tell you when a new gist has been published."
 
-Assumptions:
+***Assumptions***
 - Scripting language: Bash (could run on any Linux host without any additional language/framework package)
 - OS chosen for the POC (proof of concept): Linux RedHat Enterprise
 - Notification: Simple notification output on the standard i/o stream
 - Code Management System: GitHub
 - Delivery Method: as suggested in the initial requirements, the script will be delivered in a zip file to the client
 
-How it works:
+***How it works***
+
 The script uses the GitHub REST API v.3 to pull the list of gists from the given user. An infinite loop compares gists creation times at a given frequency (by default every 30sec). If a gist creation is found more recent than the latest recorded, a notification is sent on the standard i/o stream. The script will die if the GitHub user cannot be found or the limit of REST API calls has been exceeded.
 
-Improvement Suggestions:
-- Persistant storage: it was written to be run as a background process but could be improved by using some persistent data mechanism to store the list of gists, hence allowing to compare its contents everytime the script is run. Such a strategy would allow the script to run intermittently, using a cron tab for instance or run from a scheduled job in any CI tool.
+***Improvement Suggestions***
+- Persistant Storage: it was written to be run as a background process but could be improved by using some persistent data mechanism to store the list of gists, hence allowing to compare its contents everytime the script is run. Such a strategy would allow the script to run intermittently, using a cron tab for instance or run from a scheduled job in any CI tool.
 - Email Notification: the notification could be improved by sending an email to a distribution list so that the script i/o stream does not need to be monitored
 - Error Management: the REST API may trigger errors that are not taken into consideration, at the moment the script will die only when the given user is not found, or when the limit of API calls has been esceeded.
 
@@ -38,7 +39,7 @@ Usage: ./checkGists.sh [options]
    ./checkGists.sh <GITHUB_USERNAME>
 
 Parameters:
-	GITHUB_USERNAME: GitHub user monitored by the script
+    GITHUB_USERNAME: GitHub user monitored by the script
 
 Extra Options:
     -h: Show the script usage help
@@ -83,4 +84,3 @@ NEW GIST PUBLISHED
 ## License
 
 <Not specified>
-
