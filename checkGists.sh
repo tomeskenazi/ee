@@ -22,22 +22,23 @@ dbg_print () {
   return 1
 }
 
-# Get Gist Number
-get_gistnb() {
-  cmdres=$(curl -X GET https://api.github.com/users/$USERNAME 2>&1)
+# Get last Created Gist Time
+get_gist_latestCreatedTime(){
+  cmdres=$(curl -X GET https://api.github.com/users/$USERNAME/gists 2>&1)
+
+  # Check for errors
   if [[ "$cmdres" =~ "Not Found" ]];then
     echo "[ERROR] GITHUB User not found" >&2
     echo $(forcekill)
+    exit
   elif [[ "$cmdres" =~ "API rate limit exceeded" ]];then
     echo "[ERROR] GITHUB API rate limit exceeded" >&2
     echo $(forcekill)
+    exit
   fi
-  echo $(echo "$cmdres" | grep public_gists | sed 's/.*: //' | sed 's/,$//')
-}
 
-# Get last Created Gist Time
-get_gist_latestCreatedTime(){
-  cmdres=$(curl -X GET https://api.github.com/users/$USERNAME/gists 2>&1 | grep created_at)
+  # Search for latest git and return creation time
+  cmdres=$(echo "$cmdres" | grep created_at)
   time_top=0
   while read -r line; do
     time_created=$(echo "$line" | sed -e 's/.*: "//' -e 's/".*$//')
